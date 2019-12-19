@@ -1,4 +1,11 @@
+底层
 1.基于freebsd
 2.bbr算法
 3.pf
 4.openvpn
+
+
+web
+1.使用bottle
+
+
