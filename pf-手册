@@ -1,8 +1,17 @@
-pfctl -f /etc/pf.conf  # 载入 pf.conf 文件
-pfctl -nf /etc/pf.conf # 解析文件，但不载入
-pfctl -Nf /etc/pf.conf # 只载入文件中的NAT规则
-pfctl -Rf /etc/pf.conf # 只载入文件中的过滤规则
-pfctl -sn # 显示当前的NAT规则
-pfctl -sr # 显示当前的过滤规则
-pfctl -ss # 显示当前的状态表
-pfctl -si # 显示过滤状态和计数
+#pfctl -e 						//启用PF（开启Packet Filter功能）
+#pfctl -d 						//禁用PF（关闭Packet Filter功能）
+
+#pfctl -f /etc/pf.conf 			//重新加载pf.conf设定档
+#pfctl -nf /etc/pf.conf 		//检查PF语法是否正确（未加载）
+#pfctl -Nf /etc/pf.conf			//仅加载NAT的设定档
+#pfctl -Rf /etc/pf.conf			//仅加载防火墙的过滤设定档
+
+#pfctl -sn 						//显示现阶段NAT的规则
+#pfctl -sr 						//显示现阶段过滤的规则
+#pfctl -ss						//显示现阶段封包运作状态
+#pfctl -si 						//显示现阶段过滤封包的统计数据
+#pfctl -sa 						//显示现阶段所有统计的数据
+
+#pfctl -vsr 					//显示现阶段过滤封包的统计数据
+#pfctl -t ssh-bruteforce -Tshow //显示table内数据
+#pfctl -Fa -e -f /etc/pf.conf 	//清除所有规则、启用PF、加载pf.conf设定档
