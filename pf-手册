@@ -1,6 +1,3 @@
-kldload pf 加载pf模块
-
-
 pfctl -f /etc/pf.conf  # 载入 pf.conf 文件
 pfctl -nf /etc/pf.conf # 解析文件，但不载入
 pfctl -Nf /etc/pf.conf # 只载入文件中的NAT规则
