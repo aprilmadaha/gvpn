@@ -1,4 +1,4 @@
-kldload pf
+kldload pf 加载pf模块
 
 
 pfctl -f /etc/pf.conf  # 载入 pf.conf 文件
