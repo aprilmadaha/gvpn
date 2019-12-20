@@ -1,0 +1,14 @@
+1.配置网卡
+ifconfig em0 1.1.1.1 255.255.255.0
+
+2.开启PF
+kldload pf
+pf_enable="YES"
+#pf_rules="/usr/local/etc/pf.conf"
+pf_rules="/etc/pf.conf"
+pflog_enable="YES"
+pflog_logfile="/var/log/pflog"
+
+3.允许转发
+# sysctl net.inet.ip.forwarding=1
+# echo  'net.inet.ip.forwarding=1' >> /etc/sysctl.conf
