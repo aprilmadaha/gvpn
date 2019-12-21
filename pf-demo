@@ -40,5 +40,6 @@ pass in on $ext_if inet proto tcp from any to ($ext_if) port $tcp_services flags
 
 pass in  quick on $int_if from $priv_nets to any keep state
 pass out quick on $int_if from any to $priv_nets keep state
+
 pass out on $ext_if proto tcp all modulate state flags S/SA
 pass out on $ext_if proto { udp, icmp } all keep state
