@@ -1,0 +1,53 @@
+ -----------------------------相关优化参数---------------------------------------
+1. /boot/loader.conf
+   
+# H-TCP Congestion Control for a more aggressive increase in speed on higher
+# latency, high bandwidth networks with some packet loss.
+cc_htcp_load="YES"
+
+# CAIA Delay-Gradient (CDG) is a temporal, delay-based TCP congestion control
+#
+#cc_cdg_load="YES"
+
+# CUBIC Congestion Control improves TCP-friendliness and RTT-fairness. The
+# window growth function of CUBIC is governed by a cubic function in terms of
+# the elapsed time since the last loss event.
+# https://labs.ripe.net/Members/gih/bbr-tcp
+#cc_cubic_load="YES"
+
+# NETISR: by default, FreeBSD uses a single thread to process all network
+# traffic in accordance with the strong ordering requirements found in some
+# protocols, such as TCP. In order to increase potential packet processing
+# concurrency, net.isr.maxthreads can be define as "-1" which will
+# automatically enable netisr threads equal to the number of CPU cores in the
+# machine. Now, all CPU cores can be used for packet processing and the system
+# will not be limited to a single thread running on a single CPU core.
+#
+# The Intel igb(4) driver with queues autoconfigured (hw.igb.num_queues="0")
+# and msix enabled (hw.igb.enable_msix=1) will create the maximum number of
+# queues limited by the Intel igb hardware, msix messages and the number of
+# CPUs in the system. Once the igb interface maximum number of queues is
+# defined, an interrupt handler is bound to each of those queues on their
+# respective seperate CPU cores. The igb driver then creates a separate
+# single-threaded taskqueue for each queue and each queue's interrupt handler
+# sends work to its associated taskqueue when the interrupt fires. Those
+# taskqueues are on the same CPU core where the ethernet packets were received
+# and processed by the driver. All IP (and above) processing for that packet
+# will be performed on the same CPU the queue interrupt was bound to thus
+# gaining CPU affinity for that flow.
+#
+# A single net.isr workflow on a Core i5 CPU can process ~4Gbit/sec of traffic
+# which is adequate for a dual 1Gbit/sec firewall interface. On a system
+# supporting mostly non-ordered protocols such as UDP (HTTP/3, Google's QUIC or
+# NTPd) you may want to assign more queues and bind them to their own CPU core.
+# For a 10GBit/sec interface, we recommend a modern CPU with at least four(4)
+# real CPU cores and enable net.isr.maxthreads="-1". Use "netstat -Q" to check
+# bindings and work streams. "vmstat -i" for interrupts per network queue.
+# https://lists.freebsd.org/pipermail/freebsd-net/2014-April/038470.html
+#
+# Do Not enable net.isr.maxthreads on Chelsio T5/T4 cards.
+#
+net.isr.maxthreads="-1"  # (default 1, single threaded)
+
+# load the PF CARP module
+#if_carp_load="YES"
