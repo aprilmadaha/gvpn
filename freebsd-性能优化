@@ -51,3 +51,9 @@ net.isr.maxthreads="-1"  # (default 1, single threaded)
 
 # load the PF CARP module
 #if_carp_load="YES"
+
+# number of hash table buckets to handle incoming tcp connections. a value of
+# 65536 allows the system to handle millions incoming connections. each tcp
+# entry in the hash table on x86_64 uses 252 bytes of ram.  vmstat -z | egrep
+# "ITEM|tcpcb" (default 65536 which is ~16 million connections)
+#net.inet.tcp.tcbhashsize="65536"
