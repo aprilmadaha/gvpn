@@ -68,3 +68,21 @@ net.isr.maxthreads="-1"  # (default 1, single threaded)
 # enabled, newreno by default.
 #
 net.inet.tcp.rfc6675_pipe=1  # (default 0)
+
+# Firewall: Ip Forwarding to allow packets to traverse between interfaces and
+# is used for firewalls, bridges and routers. When fast IP forwarding is also
+# enabled, IP packets are forwarded directly to the appropriate network
+# interface with direct processing to completion, which greatly improves the
+# throughput. All packets for local IP addresses, non-unicast, or with IP
+# options are handled by the normal IP input processing path. All features of
+# the normal (slow) IP forwarding path are supported by fast forwarding
+# including firewall (through pfil(9) hooks) checking, except ipsec tunnel
+# brokering. The IP fast forwarding path does not generate ICMP redirect or
+# source quench messages though. Compared to normal IP forwarding, fast
+# forwarding can give a speedup of 40 to 60% in packet forwarding performance
+# which is great for interactive connections like online games or VOIP where
+# low latency is critical. These options are already enabled if
+# gateway_enable="YES" is in /etc/rc.conf
+#net.inet.ip.forwarding=1      # (default 0)
+#net.inet.ip.fastforwarding=1  # (default 0)  FreeBSD 11 enabled fastforwarding by default
+#net.inet6.ip6.forwarding=1    # (default 0)
