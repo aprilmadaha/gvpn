@@ -57,3 +57,14 @@ net.isr.maxthreads="-1"  # (default 1, single threaded)
 # entry in the hash table on x86_64 uses 252 bytes of ram.  vmstat -z | egrep
 # "ITEM|tcpcb" (default 65536 which is ~16 million connections)
 #net.inet.tcp.tcbhashsize="65536"
+
+# RFC 6675 increases the accuracy of TCP Fast Recovery when combined with
+# Selective Acknowledgement (net.inet.tcp.sack.enable=1). TCP loss recovery is
+# enhanced by computing "pipe", a sender side estimation of the number of bytes
+# still outstanding on the network. Fast Recovery is augmented by sending data
+# on each ACK as necessary to prevent "pipe" from falling below the slow-start
+# threshold (ssthresh). The TCP window size and SACK-based decisions are still
+# determined by the congestion control algorithm; CDG, CUBIC or H-TCP if
+# enabled, newreno by default.
+#
+net.inet.tcp.rfc6675_pipe=1  # (default 0)
