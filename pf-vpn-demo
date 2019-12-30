@@ -1,0 +1,24 @@
+# default openvpn settings for the client network
+vpnclients = "10.8.0.0/24"
+#put your wan interface here (it will almost certainly be different)
+wanint = "em1"
+# put your tunnel interface here, it is usually tun0
+vpnint = "tun0"
+# OpenVPN by default runs on udp port 1194
+udpopen = "{1194}"
+icmptypes = "{echoreq, unreach}"
+
+set skip on lo
+#set skip on tun0
+# the essential line
+nat on $wanint inet from $vpnclients to any -> $wanint
+
+block in
+pass in on $wanint proto udp from any to $wanint port $udpopen 
+pass in on $wanint proto tcp from any to $wanint port 22
+# the following two lines could be made stricter if you don't trust the clients
+pass out
+#pass in proto tcp from any to any keep state
+pass in on $vpnint from any to any
+pass in inet proto icmp all icmp-type $icmptypes
+#pass in on $wanint inet proto tcp from any to $(wanint) port 22
