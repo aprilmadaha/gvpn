@@ -37,9 +37,10 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <sys/epoll.h>
+#include <fcntl.h>
 
 /* buffer for reading from tun/tap interface, must be >= 1500 */
-#define BUFSIZE 2000   
+#define BUFSIZE 4096   
 #define CLIENT 0
 #define SERVER 1
 #define PORT 55555
@@ -179,9 +180,10 @@ int main(int argc, char *argv[]) {
   
   int tap_fd, option;
   int flags = IFF_TUN;
+  int flag_no;  //no-black
   char if_name[IFNAMSIZ] = "";
   int maxfd;
-  uint16_t nread, nwrite, plength;
+  uint16_t nread, nwrite, plength,bufs;
   char buffer[BUFSIZE];
   struct sockaddr_in local, remote;
   char remote_ip[16] = "";            /* dotted quad IP string */
@@ -310,18 +312,23 @@ int main(int argc, char *argv[]) {
 
     memset(&event, 0, sizeof(event));
     event.data.fd = sock_fd;
-    event.events = EPOLLIN | EPOLLET;
+    event.events = EPOLLIN;
     int epollctl = epoll_ctl(efd,EPOLL_CTL_ADD,sock_fd,&event);
     if(epollctl == -1)
       perror("epoll_ctl error");
+   
+    event.data.fd = tap_fd;
+    event.events = EPOLLIN;
+    int epollctl1 = epoll_ctl(efd,EPOLL_CTL_ADD,tap_fd,&event);
+    if(epollctl1 == -1)
+      perror("epoll_ctl111 error");
 
-    
     while(1) {
 
-        int num = epoll_wait(efd,events,MAXEPOLLSIZE,500);
-        if (num == -1){
+        int num = epoll_wait(efd,events,MAXEPOLLSIZE,-1);
+         if (num == -1){
           perror("epoll_wait error");
-        }else{
+        }else {
           int i;
           for (i = 0 ; i < num; ++i)
           {
@@ -331,74 +338,90 @@ int main(int argc, char *argv[]) {
               /* code */
               remotelen = sizeof(remote);
               memset(&remote, 0, remotelen);
-              if ((c_fd = accept(sock_fd, (struct sockaddr*)&remote, &remotelen)) < 0) {
-                perror("accept()");
+              if ((net_fd = accept(sock_fd, (struct sockaddr*)&remote, &remotelen)) < 0) {
+                perror("accept() error");
                 continue;
               // exit(1);
               }
               printf("accetp %s\n",inet_ntoa(remote.sin_addr));
 
-              event.data.fd = c_fd;
-              event.events = EPOLLOUT | EPOLLET;
-              epoll_ctl(efd,EPOLL_CTL_ADD,c_fd,&event);
+              // fcntl(c_fd, F_SETFL, O_NONBLOCK); //no-black
 
-            } else if(events[i].events & EPOLLOUT){
-              printf("events[i].events & EPOLLOUT)");
-              nread = cread(tap_fd, buffer, BUFSIZE);
-
-              tap2net++;
-              do_debug("TAP2NET %lu: Read %d bytes from the tap interface\n", tap2net, nread);
-              ev_fd = events[i].data.fd;
-              /* write length + packet */
-              plength = htons(nread);
-              nwrite = cwrite(ev_fd, (char *)&plength, sizeof(plength));
-              nwrite = cwrite(ev_fd, buffer, nread);
-              
-              do_debug("TAP2NET %lu: Written %d bytes to the network\n", tap2net, nwrite);
-              event.data.fd = ev_fd;
-              event.events = EPOLLIN | EPOLLET;
-              epoll_ctl(efd,EPOLL_CTL_MOD,ev_fd,&event);
+              event.data.fd = net_fd;
+              event.events = EPOLLIN;
+              epoll_ctl(efd,EPOLL_CTL_ADD,net_fd,&event);
 
             } else if(events[i].events & EPOLLIN){
-              /* data from the network: read it, and write it to the tun/tap interface. 
-              * We need to read the length first, and then the packet */
-              printf("events[i].events & EPOLLIN)");
-              /* Read length */      
-              ev_fd = events[i].data.fd;
-              // nread = read_n(ev_fd, (char *)&plength, sizeof(plength));
-              nread = cread(ev_fd, buffer, ntohs(plength));
-              // if(nreed < 0){
+              if(tap_fd == events[i].data.fd){
+                // int ret,ret1;
+                // unsigned char buf[4096];
                 
-              // // }
-              // if(nread == 0) {
-              //   /* ctrl-c at the other end */
-              //   perror("nread ==0 ");
-              //   // break;
-              //   // continue;
-              //   close(ev_fd);
-              // }else if(nread < 0){
-              //   perror("nread < 0 ");
-              //   close(ev_fd);
-              // }
-          
-              net2tap++;
+                // ret = read(tap_fd, buf, sizeof(buf));
+                nread = cread(tap_fd, buffer, BUFSIZE);
 
-              /* read packet */
-              // nread = read_n(ev_fd, buffer, ntohs(plength));
-              do_debug("NET2TAP %lu: Read %d bytes from the network\n", net2tap, nread);
+                tap2net++;
+                do_debug("TAP2NET %lu: Read %d bytes from the tap interface\n", tap2net, nread);
+                
+                // if(nread <0){
+                //   perror("read from tap_fd error ");
+                //   continue;
+                // }
+                // perror("begin read from tap_df ");
+                // int ev_fd = events[i].data.fd;
 
-              /* now buffer[] contains a full packet or frame, write it into the tun/tap interface */ 
-              nwrite = cwrite(tap_fd, buffer, nread);
-              do_debug("NET2TAP %lu: Written %d bytes to the tap interface\n", net2tap, nwrite);
-              event.data.fd = ev_fd;
-              event.events = EPOLLOUT | EPOLLET;
-              epoll_ctl(efd,EPOLL_CTL_MOD,ev_fd,&event);
+                // if(nread >0){
+                //   // ret1 = write(net_fd, buf, ret);
+                 
+                // }
+                plength = htons(nread);
+                // nwrite = cwrite(net_fd, (char *)&plength, sizeof(plength));
+                // nwrite = write(net_fd, buf, plength);
+                
+                nwrite = cwrite(net_fd, (char *)&plength, sizeof(plength));
+                nwrite = cwrite(net_fd, buffer, nread);
+                do_debug("TAP2NET %lu: Written %d bytes to the network\n", tap2net, nwrite);
+              }
+              if(net_fd == events[i].data.fd){
+                // int ret;
+                // unsigned char buf[4096];
+
+                // int ev_fd1 = events[i].data.fd;
+                // printf("ev_fd1 %s",ev_fd1);
+                nread = read_n(net_fd, (char *)&plength, sizeof(plength));
+                if(nread == 0) {
+                  /* ctrl-c at the other end */
+                  break;
+                }
+                net2tap++;
+                // nread = read_n(net_fd, buffer, ntohs(plength));
+                // bufs = ntohs(sizeof(buf));
+                // ret = read(net_fd, buf, bufs);
+                nread = read_n(net_fd, buffer, ntohs(plength));
+                do_debug("NET2TAP %lu: Read %d bytes from the network\n", net2tap, nread);
+
+                // if(ret <0){ 
+                //   perror("read from socket_df error");
+                //   continue;
+                // }
+                
+                // perror("begin read from socket_df ");
+                // if(nread >0){
+                //   // ret = write(tap_fd, buf, ret);
+                //   // nwrite = cwrite(tap_fd, buffer, nread);
+                // }
+                nwrite = cwrite(tap_fd, buffer, nread);
+                do_debug("NET2TAP %lu: Written %d bytes to the tap interface\n", net2tap, nwrite);
+              }
+        
+            } else {
+              continue;
             }
                   
           }
           
         }
-  }
+  
+  } //while
     /* wait for connection request */
   
     // do_debug("SERVER: Client connected from %s\n", inet_ntoa(remote.sin_addr));
